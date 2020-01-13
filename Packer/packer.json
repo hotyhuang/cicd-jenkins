@@ -1,0 +1,29 @@
+{
+	"builders": [{
+		"type": "amazon-ebs",
+		"access_key": "{{user `aws_access_key`}}",
+		"secret_key": "{{user `aws_secret_key`}}",
+		"region": "{{user `region`}}",
+		"source_ami": "{{user `ami_id`}}",
+		"instance_type": "{{user `new_instance_type`}}",
+		"ssh_username": "ubuntu",
+		"ami_name": "ami-{{user `project_name`}}-{{timestamp}}",
+		"ami_description": "Hey, i am build by packer",
+		"tags": {
+			"Env": "{{user `deploy_env`}}",
+			"Name": "ami-{{user `project_name`}}"
+		}
+	}],
+	"provisioners": [{
+        "type": "file",
+        "source": "opt",
+        "destination": "/tmp/my-project"
+    }, {
+        "type": "shell",
+        "environment_vars": [
+            "DEPLOY_ENV={{user `deploy_env`}}",
+            "REGION={{user `region`}}"
+        ],
+        "script": "app_start_script"
+    }]
+}

@@ -1,0 +1,173 @@
+pipeline {
+    agent any
+    
+    // parameters doc: https://jenkins.io/doc/book/pipeline/syntax/#parameters
+    parameters {
+        string(
+            name: 'PROJECT_NAME',
+            defaultValue:'',
+            description: 'Provide a project name, which will be used in ami name.'
+        )
+        string(
+            name: 'GIT_LINK',
+            defaultValue: '',
+            description: 'The git url, if use ssh, please provide git credentials'
+        )
+        string(
+            name: 'GIT_CREDENTIALS',
+            defaultValue: '',
+            description: 'The git credentials if needed'
+        )
+        string(
+            name: 'AWS_CREDENTIALS',
+            defaultValue: '',
+            description: 'The AWS credential, required to generate AMI'
+        )
+        string(
+            name: 'SOURCE_AMI_ID',
+            defaultValue:'',
+            description: 'The source AMI id used to generate new AMI.'
+        )
+        choice(
+            name: 'REGION',
+            choices: ['us-east-1', 'us-west-1'],
+            description: 'AWS region to deploy'
+        )
+        choice(
+            name: 'ENV',
+            choices: ['dev', 'qa', 'staging', 'prod'],
+            description: 'deploy environment'
+        )
+        choice(
+            name: 'NEW_INSTANCE_TYPE',
+            choices: ['t2.nano', 't2.micro', 't2.small', 't2.medium'],
+            description: 'deploy instance type'
+        )
+        // git parameter plugin, doc:
+        // https://wiki.jenkins.io/display/JENKINS/Git+Parameter+Plugin
+        gitParameter(
+            name: 'BRANCH_TAG',
+            description: 'the branch of your project to be deployed',
+            defaultValue: 'master',
+            branchFilter: 'origin/(.*)',
+            quickFilterEnabled: true,
+            tagFilter: '*',
+            type: 'PT_BRANCH_TAG'
+        )
+        booleanParam(
+            name: 'TRIGGER_TERRAFORM',
+            defaultValue: true,
+            description: 'Do you want to trigger terraform afterwards?'
+        )
+        booleanParam(
+            name: 'DESTROY',
+            defaultValue: false,
+            description: 'Do you want to run destroy the instances and AMIs?'
+        )
+    }
+
+    stages {
+        stage('Git Checkout') {
+            steps{
+                load "../environments.config"
+
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "${params.BRANCH_TAG}"]],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [[
+                        $class: 'RelativeTargetDirectory',
+                        relativeTargetDir: "opt"
+                    ]],
+                    submoduleCfg: [],
+                    userRemoteConfigs: [[
+                        url: "${params.GIT_LINK ? params.GIT_LINK : env.GIT_LINK}",
+                        credentialsId: "${params.GIT_CREDENTIALS ? params.GIT_CREDENTIALS : env.GIT_CREDENTIALS}"
+                    ]]
+                ])
+            }
+        }
+
+        stage('Validate Params') {
+            steps {
+                load "../environments.config"
+
+                script {
+                    def matcher = "${params.PROJECT_NAME ? params.PROJECT_NAME : env.PROJECT_NAME}" =~ /[^\w|^\-]/
+
+                    if (matcher.find()) {
+                        error("Invalid project name, only alphanumeric characters and hyphens are allowed.")
+                    }
+                }
+            }
+        }
+
+        stage('Build - AMI') {
+            when {
+                expression { params.DESTROY == false }
+            }
+            steps{
+                load "../environments.config"
+
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId : "${params.AWS_CREDENTIALS ? params.AWS_CREDENTIALS : env.AWS_CREDENTIALS}",                                                 
+                    accessKeyVariable: 'AWS_ACCESS',
+                    secretKeyVariable: 'AWS_SECRET'
+                ]]) {
+                    sh """
+                        packer build \
+                        -var aws_access_key=${AWS_ACCESS} \
+                        -var aws_secret_key=${AWS_SECRET} \
+                        -var project_name=\"${params.PROJECT_NAME ? params.PROJECT_NAME : env.PROJECT_NAME}\" \
+                        -var ami_id=${params.SOURCE_AMI_ID ? params.SOURCE_AMI_ID : env.SOURCE_AMI_ID} \
+                        -var region=${params.REGION} \
+                        -var deploy_env=${params.ENV} \
+                        -var new_instance_type=${params.NEW_INSTANCE_TYPE} \
+                        packer.json
+                    """
+                }
+            }
+        }
+
+        stage('Build - Terraform') {
+            when {
+                expression { params.TRIGGER_TERRAFORM == true }
+            }
+            steps {
+                build job: 'Terraform',
+                parameters: [
+                    string(name: 'PROJECT_NAME', value: params.PROJECT_NAME),
+                    string(name: 'AWS_CREDENTIALS', value: params.AWS_CREDENTIALS),
+                    string(name: 'REGION', value: params.REGION),
+                    string(name: 'ENV', value: params.ENV),
+                    string(name: 'NEW_INSTANCE_TYPE', value: params.NEW_INSTANCE_TYPE),
+                    booleanParam(name: 'DESTROY', value: params.DESTROY)
+                ]
+            }
+        }
+
+        stage('Destroy existing image(s)') {
+            when {
+                expression { params.DESTROY == true}
+            }
+            steps {
+                load "../environments.config"
+
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId : "${params.AWS_CREDENTIALS ? params.AWS_CREDENTIALS : env.AWS_CREDENTIALS}",                                                 
+                    accessKeyVariable: 'AWS_ACCESS',
+                    secretKeyVariable: 'AWS_SECRET'
+                ]]) {
+                    sh """
+                        sh clean_ami_script.sh \
+                        --aws_key ${AWS_ACCESS} \
+                        --aws_secret ${AWS_SECRET} \
+                        ${params.PROJECT_NAME ? params.PROJECT_NAME : env.PROJECT_NAME}
+                    """
+                }
+            }
+        }
+    }
+}

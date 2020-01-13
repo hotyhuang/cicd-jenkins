@@ -1,0 +1,101 @@
+pipeline {
+    agent any
+    
+    // parameters doc: https://jenkins.io/doc/book/pipeline/syntax/#parameters
+    parameters {
+        string(
+            name: 'PROJECT_NAME',
+            defaultValue:'',
+            description: 'Provide a project name, which will be used in ami name.'
+        )
+        string(
+            name: 'AWS_CREDENTIALS',
+            defaultValue: '',
+            description: 'The AWS credential, required to generate AMI'
+        )
+        choice(
+            name: 'REGION',
+            choices: ['us-east-1', 'us-west-1'],
+            description: 'AWS region to deploy'
+        )
+        choice(
+            name: 'ENV',
+            choices: ['dev', 'qa', 'staging', 'prod'],
+            description: 'deploy environment'
+        )
+        choice(
+            name: 'NEW_INSTANCE_TYPE',
+            choices: ['t2.nano', 't2.micro', 't2.small', 't2.medium'],
+            description: 'deploy instance type'
+        )
+        booleanParam(
+            name: 'DESTROY',
+            defaultValue: false,
+            description: 'Do you want to run destroy terraform?'
+        )
+    }
+    
+    stages {
+        stage('Launch with Terraform') {
+            when {
+                expression { params.DESTROY == false}
+            }
+            steps{
+                load "../environments.config"
+
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId : "${params.AWS_CREDENTIALS ? params.AWS_CREDENTIALS : env.AWS_CREDENTIALS}",                                                 
+                    accessKeyVariable: 'AWS_ACCESS',
+                    secretKeyVariable: 'AWS_SECRET'
+                ]]) {
+                    withEnv([
+                        "PROJECT_NAME=${params.PROJECT_NAME ? params.PROJECT_NAME : env.PROJECT_NAME}",
+                    ]) {
+                        sh """
+                            terraform init
+                            terraform apply -auto-approve \
+                            -var aws_access_key=${AWS_ACCESS} \
+                            -var aws_secret_key=${AWS_SECRET} \
+                            -var project_name=\"${PROJECT_NAME}\" \
+                            -var region=${params.REGION} \
+                            -var env=${params.ENV} \
+                            -var new_instance_type=${params.NEW_INSTANCE_TYPE} \
+                            -state-out \"data/${PROJECT_NAME}/terraform.tfstate\"
+                        """
+                    }
+                }
+            }
+        }
+        stage('Destroy existing Terraform') {
+            when {
+                expression { params.DESTROY == true}
+            }
+            steps {
+                load "../environments.config"
+
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId : "${params.AWS_CREDENTIALS ? params.AWS_CREDENTIALS : env.AWS_CREDENTIALS}",                                                 
+                    accessKeyVariable: 'AWS_ACCESS',
+                    secretKeyVariable: 'AWS_SECRET'
+                ]]) {
+                    withEnv([
+                        "PROJECT_NAME=${params.PROJECT_NAME ? params.PROJECT_NAME : env.PROJECT_NAME}",
+                    ]) {
+                        sh """
+                            terraform destroy -auto-approve \
+                            -var aws_access_key=${AWS_ACCESS} \
+                            -var aws_secret_key=${AWS_SECRET} \
+                            -var project_name=\"${PROJECT_NAME}\" \
+                            -var region=${params.REGION} \
+                            -var env=${params.ENV} \
+                            -var new_instance_type=${params.NEW_INSTANCE_TYPE} \
+                            -state \"data/${PROJECT_NAME}/terraform.tfstate\"
+                        """
+                    }
+                }
+            }
+        }
+    }
+}
