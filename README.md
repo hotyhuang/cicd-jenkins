@@ -10,20 +10,12 @@ If you do not have one yet, I recommend you go [here](https://aws.amazon.com/con
 ### 2. Install [Jenkins](https://jenkins.io/)
 Follow the [Get Started](https://jenkins.io/doc/pipeline/tour/getting-started/) guide, and configure your jenkins server.
 
-### 3. install [Java](https://www.oracle.com/technetwork/java/javase/downloads/index.html)
+#### prerequisite installation for jenkins: [Java](https://www.oracle.com/technetwork/java/javase/downloads/index.html)
 check that Java has successfully installed by command: `java -version`
 
-### 4. install [Docker](https://docs.docker.com/)
+### 3. install [Docker](https://docs.docker.com/)
 verify by `docker -v`
 
-### 5. install [Packer](https://www.packer.io/downloads.html)
-verify by `packer -v`
-
-### 6. install [Terraform](https://www.terraform.io/downloads.html)
-verify by `terraform -v`
-
-### 7. install [aws-cli](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html)
-I only installed with version 1. If you have tried with version 2, let me know how it goes...
 
 ## Set up
 
