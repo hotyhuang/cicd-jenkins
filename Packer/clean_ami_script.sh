@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 AWS_ACCESS_KEY=
 AWS_ACCESS_SECRET=
@@ -47,7 +47,8 @@ do
 	case $line in
 		*\"ID\"*)
 			_imageId=${line#*ID\": \"}
-		    _imageId=${_imageId%\",*}
+		    # _imageId=${_imageId%\",*}
+		    _imageId=${_imageId//\"/}
 		    printf "**** found image-id %s.\n" "${_imageId}"
 		    imageIds=("${imageIds[@]}" "$_imageId")
 		    _imageId=
@@ -74,7 +75,7 @@ do
 	printf "** going to deregister image\: %s.\n" "${_id}"
 	AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY \
 	AWS_SECRET_ACCESS_KEY=$AWS_ACCESS_SECRET \
-	aws ec2 deregister-image --image-id $_id
+	aws --region $region ec2 deregister-image --image-id $_id
 done
 
 for _subid in "${snapshotIds[@]}"
@@ -82,6 +83,6 @@ do
 	printf "** going to delete snapshot\: %s.\n" "${_subid}"
 	AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY \
 	AWS_SECRET_ACCESS_KEY=$AWS_ACCESS_SECRET \
-	aws ec2 delete-snapshot --snapshot-id $_subid
+	aws --region $region ec2 delete-snapshot --snapshot-id $_subid
 done
 

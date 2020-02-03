@@ -116,7 +116,8 @@ pipeline {
                     secretKeyVariable: 'AWS_SECRET'
                 ]]) {
                     sh """
-                        packer build \
+                        docker run --rm -v \"$WORKSPACE/\":\"/opt/\" \
+                        hashicorp/packer:light build \
                         -var aws_access_key=${AWS_ACCESS} \
                         -var aws_secret_key=${AWS_SECRET} \
                         -var project_name=\"${params.PROJECT_NAME ? params.PROJECT_NAME : env.PROJECT_NAME}\" \
@@ -124,7 +125,7 @@ pipeline {
                         -var region=${params.REGION} \
                         -var deploy_env=${params.ENV} \
                         -var new_instance_type=${params.NEW_INSTANCE_TYPE} \
-                        packer.json
+                        /opt/packer.json
                     """
                 }
             }
@@ -161,7 +162,9 @@ pipeline {
                     secretKeyVariable: 'AWS_SECRET'
                 ]]) {
                     sh """
-                        sh clean_ami_script.sh \
+                        docker run --rm -v \"$WORKSPACE/:/opt/\" --entrypoint /bin/bash \
+                        hotyhuang/netadmin2-aws-cli \
+                        /opt/clean_ami_script.sh \
                         --aws_key ${AWS_ACCESS} \
                         --aws_secret ${AWS_SECRET} \
                         ${params.PROJECT_NAME ? params.PROJECT_NAME : env.PROJECT_NAME}

@@ -16,7 +16,7 @@
 	}],
 	"provisioners": [{
         "type": "file",
-        "source": "opt",
+        "source": "/opt/opt",
         "destination": "/tmp/my-project"
     }, {
         "type": "shell",
@@ -24,6 +24,6 @@
             "DEPLOY_ENV={{user `deploy_env`}}",
             "REGION={{user `region`}}"
         ],
-        "script": "app_start_script"
+        "script": "/opt/app_start_script"
     }]
 }

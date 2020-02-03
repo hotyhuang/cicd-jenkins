@@ -53,15 +53,17 @@ pipeline {
                         "PROJECT_NAME=${params.PROJECT_NAME ? params.PROJECT_NAME : env.PROJECT_NAME}",
                     ]) {
                         sh """
-                            terraform init
-                            terraform apply -auto-approve \
+                            docker run --rm -v \"$WORKSPACE/\":\"/opt/\" -w /opt/ \
+                            hashicorp/terraform:light init
+                            docker run --rm -v \"$WORKSPACE/\":\"/opt/\" -w /opt/ \
+                            hashicorp/terraform:light apply -auto-approve \
                             -var aws_access_key=${AWS_ACCESS} \
                             -var aws_secret_key=${AWS_SECRET} \
                             -var project_name=\"${PROJECT_NAME}\" \
                             -var region=${params.REGION} \
                             -var env=${params.ENV} \
                             -var new_instance_type=${params.NEW_INSTANCE_TYPE} \
-                            -state-out \"data/${PROJECT_NAME}/terraform.tfstate\"
+                            -state-out \"/opt/data/${PROJECT_NAME}/terraform.tfstate\"
                         """
                     }
                 }
@@ -84,14 +86,15 @@ pipeline {
                         "PROJECT_NAME=${params.PROJECT_NAME ? params.PROJECT_NAME : env.PROJECT_NAME}",
                     ]) {
                         sh """
-                            terraform destroy -auto-approve \
+                            docker run --rm -v \"$WORKSPACE/\":\"/opt/\" -w /opt/ \
+                            hashicorp/terraform:light destroy -auto-approve \
                             -var aws_access_key=${AWS_ACCESS} \
                             -var aws_secret_key=${AWS_SECRET} \
                             -var project_name=\"${PROJECT_NAME}\" \
                             -var region=${params.REGION} \
                             -var env=${params.ENV} \
                             -var new_instance_type=${params.NEW_INSTANCE_TYPE} \
-                            -state \"data/${PROJECT_NAME}/terraform.tfstate\"
+                            -state \"/opt/data/${PROJECT_NAME}/terraform.tfstate\"
                         """
                     }
                 }
