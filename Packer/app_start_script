@@ -1,8 +1,0 @@
-sudo mv /tmp/my-project /opt/my-project
-sudo npm install -g pm2 node-gyp
-sudo pm2 startup
-
-cd /opt/my-project
-sudo npm install --unsafe-perm=true --allow-root
-sudo pm2 start ecosystem.config.js --env $DEPLOY_ENV
-sudo pm2 save
