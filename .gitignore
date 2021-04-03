@@ -1,4 +1,3 @@
-variable.tf
 .terraform
 data/
 .DS_Store
