@@ -19,6 +19,10 @@ verify by `docker -v`
 
 ## Set up
 
+### Install Jenkins Plugin (make sure you have these)
+- CloudBees AWS Credentials
+- Git Parameter Plug-In
+
 ### Jenkins credentials
 * AWS credentials (we mark this as "aws-credential" in the following doc). go to your Jenkins --> Credentials, create a new AWS credentials with your IAM key and secret.
 ** hint: If you do not have IAM yet, plz check this [link](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user.html), and create one.
@@ -35,16 +39,18 @@ verify by `docker -v`
 **environments.config**
 ```
 // The AWS configs
-env.AWS_CREDENTIALS=<aws-credential>
-env.SOURCE_AMI_ID=<>
+env.AWS_CREDENTIALS="<aws-credential>"
+env.SOURCE_AMI_ID="<your source ami id>"
 
 
 // The Git configs
-env.GIT_LINK=<The git url where you have your project, if don't have one yet you can use mine: "git@github.com:hotyhuang/testMyApp.git">
-env.GIT_CREDENTIALS=<git-credential>
+env.GIT_LINK="<
+The git url where you have your project, if don't have one yet you can use mine: "git@github.com:hotyhuang/testMyApp.git"
+>"
+env.GIT_CREDENTIALS="<git-credential>"
 
 // Project related envs
-env.PROJECT_NAME=<Any Name without Space!!>
+env.PROJECT_NAME="<Any Name without Space!!>"
 ```
 
 * Then make Terraform folder by `mkdir Terraform`. And create a `variable.tf` file with your aws details. This will be used to run Terraform:
