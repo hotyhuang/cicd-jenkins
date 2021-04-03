@@ -28,72 +28,9 @@ verify by `docker -v`
 * Login your jenkins platform, create a new folder for the deployment by `New Item --> Folder`. You can provide any name for the folder as your own preference. 
 * Navigate into the folder, create two pipelines items named: `Packer`, `Terraform` (This has to be the same as the folder names we use in this repo)
 
-### Manage Configs
-* Now we are going to your local machine file system, or vm machine if this is what you working on, find the workspace of the Pipelines you just created. Usually it's under `~/.jenkins/workspace/<Your Folder Name>` (or you can find it in the "Home Directory" of `<Jenkins_url>/configure`). If there is nothing there, just create one with the same name (Jenkins will also automatically generate the folder when needed)
-* Then under `~/.jenkins/workspace/<Your Folder Name>`, create a config file named `environments.config`, where you can find most values above:
+### Configurations
 
-**environments.config**
-```
-// The AWS configs
-env.AWS_CREDENTIALS=<aws-credential>
-env.SOURCE_AMI_ID=<>
-
-
-// The Git configs
-env.GIT_LINK=<The git url where you have your project, if don't have one yet you can use mine: "git@github.com:hotyhuang/testMyApp.git">
-env.GIT_CREDENTIALS=<git-credential>
-
-// Project related envs
-env.PROJECT_NAME=<Any Name without Space!!>
-```
-
-* Then make Terraform folder by `mkdir Terraform`. And create a `variable.tf` file with your aws details. This will be used to run Terraform:
-
-**Terraform/variable.tf**
-```
-# These are empty defined vars, just to pass from jenkins deploy
-variable "aws_access_key" {}
-variable "aws_secret_key" {}
-variable "region" {}
-variable "env" {}
-variable "project_name" {}
-variable "new_instance_type" {}
-
-# The below vars are required
-variable "security_group_ids" {
-  default = "xxx"
-}
-
-variable "vpc_id" {
-  default = "xxx"
-}
-
-variable "subnet_id" {
-  default = "xxx"
-}
-
-variable "subnet_id2" {
-  default = "xxx"
-}
-
-variable "aws_account_num" {
-  default = "xxx"
-}
-
-variable "key_pair_name" {
-  default = "xxx"
-}
-
-variable "r53_zone_id" {
-  default = "xxx"
-}
-
-variable "r53_domain_name" {
-  default = "xxx"
-}
-```
-
-So your final folder structure will look like this:
+Your final folder structure will look like this:
 
 ```
 --workspace
@@ -106,6 +43,30 @@ So your final folder structure will look like this:
     |--environments.config
     |--...
 ```
+
+#### environments (not needed if you want to set up with Jenkins params)
+
+* We are going to your local machine file system, or vm machine if this is what you working on, find the workspace of the Pipelines you just created. Usually it's under `~/.jenkins/workspace/<Your Folder Name>` (or you can find it in the "Home Directory" of `<Jenkins_url>/configure`). If there is nothing there, just create one with the same name (Jenkins will also automatically generate the folder when needed)
+* Then under `~/.jenkins/workspace/<Your Folder Name>`, create a config file named `environments.config`, where you can find most values above:
+
+**environments.config**
+```
+// The AWS configs
+env.AWS_CREDENTIALS="<aws-credential>"
+env.SOURCE_AMI_ID="<>"
+
+
+// The Git configs
+env.GIT_LINK="<The git url where you have your project, if don't have one yet you can use mine: "git@github.com:hotyhuang/testMyApp.git">"
+env.GIT_CREDENTIALS="<git-credential>"
+
+// Project related envs
+env.PROJECT_NAME="<Any Name without Space!!>"
+```
+
+### [Packer setup](https://github.com/hotyhuang/cicd-jenkins/tree/Packer)
+
+### [Terraform setup](https://github.com/hotyhuang/cicd-jenkins/tree/Terraform)
 
 ## Run the Deploy, Magic!!
 
