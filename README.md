@@ -5,6 +5,14 @@
 Plz read [this](https://github.com/hotyhuang/cicd-jenkins#my-jenkins-pipeline-repo) b4 you come here
 
 
+### Create Jenkins Pipeline job
+
+In the Pipeline section, select "Pipeline script from SCM", and config the follow specs:
+* Repository URL: git@github.com:hotyhuang/cicd-jenkins.git
+* Credentials: <select the "git-credential" you created>
+* Branch: `*/Packer`
+
+
 ### Configs
 If you choose to set up with **environments.config**, there is nothing you need to do here.
 
