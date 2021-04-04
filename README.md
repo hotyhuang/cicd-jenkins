@@ -4,6 +4,12 @@
 
 Plz read [this](https://github.com/hotyhuang/cicd-jenkins#my-jenkins-pipeline-repo) b4 you come here
 
+### Create Jenkins Pipeline job, named "Terraform", under same folder as - Packer
+
+In the Pipeline section, select "Pipeline script from SCM", and config the follow specs:
+* Repository URL: git@github.com:hotyhuang/cicd-jenkins.git
+* Credentials: <select the "git-credential" you created>
+* Branch: `*/Terraform`
 
 ## Configs
 
