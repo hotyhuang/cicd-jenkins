@@ -30,20 +30,6 @@ verify by `docker -v`
 
 ### Configurations
 
-Your final folder structure will look like this:
-
-```
---workspace
- |--MyFolder
-    |--Packer
-       |...
-    |--Terraform
-      |--variable.tf
-      |--....
-    |--environments.config
-    |--...
-```
-
 #### environments (not needed if you want to set up with Jenkins params)
 
 * We are going to your local machine file system, or vm machine if this is what you working on, find the workspace of the Pipelines you just created. Usually it's under `~/.jenkins/workspace/<Your Folder Name>` (or you can find it in the "Home Directory" of `<Jenkins_url>/configure`). If there is nothing there, just create one with the same name (Jenkins will also automatically generate the folder when needed)
